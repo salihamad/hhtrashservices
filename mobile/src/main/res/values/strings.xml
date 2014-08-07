@@ -7,5 +7,10 @@
     <string name="title_section3">Section 3</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="title_activity_login">LoginActivity</string>
+    <string name="registerWelcomeText">Register Apartment</string>
+    <string name="select_apt_name">Enter your apartment name</string>
+    <string name="submit_apt_btn">Submit</string>
+    <string name="arlington_name">Arlington Park</string>
 
 </resources>
