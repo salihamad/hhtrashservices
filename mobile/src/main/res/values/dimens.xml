@@ -4,4 +4,6 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="activity_vertical_margin_32">32dp</dimen>
     <dimen name="register_list_view_height">192dp</dimen>
+
+    <dimen name="tab_host_default_height">48dp</dimen>
 </resources>

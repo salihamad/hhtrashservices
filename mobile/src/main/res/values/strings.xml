@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">HH Trash Services</string>
-    <string name="title_section1">Section 1</string>
-    <string name="title_section2">Section 2</string>
-    <string name="title_section3">Section 3</string>
+    <string name="app_name">H&amp;H Trash Services</string>
+    <string name="title_section1">Home</string>
+    <string name="title_section2">Campus</string>
+    <string name="title_section3">How It Works</string>
+    <string name="apt_empty_text">There are currently no apartments available.</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_logout">Logout</string>
+    <string name="action_apartment">Apartments</string>
     <string name="title_activity_login">LoginActivity</string>
     <string name="registerWelcomeText">Sign Up</string>
     <string name="loginWelcomeText">Log In</string>
@@ -15,6 +17,7 @@
     <string name="username_hint_text">Username</string>
     <string name="password_hint_text">Password</string>
     <string name="submit_btn">Submit</string>
+    <string name="select_apt_btn">Confirm</string>
     <string name="arlington_name">Arlington Park</string>
     <string name="register_error_message">Please enter a username and password.</string>
     <string name="login_error_message">Please enter a username and password.</string>
