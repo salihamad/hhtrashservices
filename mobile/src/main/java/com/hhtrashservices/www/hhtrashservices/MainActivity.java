@@ -1,12 +1,12 @@
 package com.hhtrashservices.www.hhtrashservices;
 
-import android.app.Activity;
 import android.app.ActionBar;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
 import android.content.Intent;
-import android.support.v13.app.FragmentPagerAdapter;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
@@ -16,16 +16,26 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.google.android.gms.wearable.DataMap;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
+import com.google.android.gms.wearable.Wearable;
 import com.parse.ParseUser;
 
-import se.heinrisch.talkclient.TalkClient;
-import se.heinrisch.talkclient.adapters.TalkMessageAdapter;
 
-
-public class MainActivity extends FragmentActivity implements ActionBar.TabListener {
+public class MainActivity extends FragmentActivity implements
+        ActionBar.TabListener,
+        View.OnClickListener,
+        GoogleApiClient.ConnectionCallbacks, MessageApi.MessageListener {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -36,6 +46,12 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
      * {@link android.support.v13.app.FragmentStatePagerAdapter}.
      */
     SectionsPagerAdapter mSectionsPagerAdapter;
+    private GoogleApiClient mGoogleApiClient;
+    private int mShortAnimationDuration;
+    private View progress;
+    private View onOffView;
+    private Node peerNode;  //  There's normally only one.
+    //ListenerServiceMobile mListenerServiceMobile;
 
     public static final String TAG = MainActivity.class.getSimpleName();
 
@@ -44,14 +60,27 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
      */
     ViewPager mViewPager;
 
-    private TalkClient mTalkClient;
+    //private TalkClient mTalkClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
 
-        mTalkClient = new TalkClient(this);
+        //mTalkClient = new TalkClient(this);
+
+        //  Is needed for communication between the wearable and the device.
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(new GoogleApiClient.OnConnectionFailedListener() {
+                    @Override
+                    public void onConnectionFailed(ConnectionResult result) {
+                        Log.d(TAG, "onConnectionFailed: " + result);
+                    }
+                })
+                .addApi(Wearable.API)
+                .build();
+        mGoogleApiClient.connect();
 
         ParseUser currentUser = ParseUser.getCurrentUser();
 
@@ -66,6 +95,8 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
         // primary sections of the activity.
         //mSectionsPagerAdapter = new SectionsPagerAdapter(this,getFragmentManager());
         mSectionsPagerAdapter = new SectionsPagerAdapter(this,getSupportFragmentManager());
+
+        //mListenerServiceMobile = new ListenerServiceMobile();
 
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.pager);
@@ -93,8 +124,87 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                             .setTabListener(this));
         }
 
-        sendMessage();
+        //sendMessage();
     }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        Log.v(TAG, "connected to Google Play Services on Wear!");
+        Wearable.MessageApi.addListener(mGoogleApiClient, this).setResultCallback(resultCallback);
+    }
+
+    /**
+     * Not needed, but here to show capabilities. This callback occurs after the MessageApi
+     * listener is added to the Google API Client.
+     */
+    private ResultCallback<Status> resultCallback =  new ResultCallback<Status>() {
+        @Override
+        public void onResult(Status status) {
+            Log.v(TAG, "Status: " + status.getStatus().isSuccess());
+            new AsyncTask<Void, Void, Void>(){
+                @Override
+                protected Void doInBackground(Void... params) {
+                    sendStartMessage();
+                    return null;
+                }
+            }.execute();
+        }
+    };
+
+    private void sendStartMessage(){
+
+        NodeApi.GetConnectedNodesResult rawNodes =
+                Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+
+        for (final Node node : rawNodes.getNodes()) {
+            Log.v(TAG, "Node: " + node.getId());
+
+            PutDataMapRequest dataMap = PutDataMapRequest.create("/count");
+            dataMap.getDataMap().putInt("Count", 234);
+            PutDataRequest request = dataMap.asPutDataRequest();
+            PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
+                    .putDataItem(mGoogleApiClient, request);
+
+            pendingResult.setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+                @Override
+                public void onResult(final DataApi.DataItemResult result) {
+                    if(result.getStatus().isSuccess()) {
+                        Log.d(TAG, "Data item set: " + result.getDataItem().getUri());
+                    }
+                }
+            });
+
+            PendingResult<MessageApi.SendMessageResult> result = Wearable.MessageApi.sendMessage(
+                    mGoogleApiClient,
+                    node.getId(),
+                    "/start",
+                    null
+            );
+
+            result.setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
+                @Override
+                public void onResult(MessageApi.SendMessageResult sendMessageResult) {
+                    //  The message is done sending.
+                    //  This doesn't mean it worked, though.
+                    Log.v(TAG, "Our callback is done.");
+                    peerNode = node;    //  Save the node that worked so we don't have to loop again.
+                }
+            });
+
+
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Wearable.MessageApi.removeListener(mGoogleApiClient, this);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+    }
+
 
     @Override
     protected void onResume() {
@@ -104,11 +214,11 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 
     @Override
     protected void onDestroy() {
-        mTalkClient.disconnectClient();
+       // mTalkClient.disconnectClient();
         super.onDestroy();
     }
 
-    private void sendMessage() {
+    /*private void sendMessage() {
         DataMap dataMap = new DataMap();
         dataMap.putString("data", "HH Trash Services Says Hello");
         mTalkClient.setTalkMessageAdapter(new TalkMessageAdapter(){
@@ -117,7 +227,28 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
                 Log.e(TAG, "Message sent");
             }
         });
-        mTalkClient.sendMessage("/my-path", dataMap);
+        mTalkClient.sendMessage("/MyActivity", dataMap);
+    }*/
+
+    @Override
+    public void onMessageReceived(final MessageEvent messageEvent) {
+
+        /*
+        This method apparently runs in a background thread.
+         */
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if(messageEvent.getPath().endsWith("connected")){
+
+                }
+                else{
+                }
+            }
+        });
+
+        Log.v(TAG, "Message received on wear: " + messageEvent.getPath());
     }
 
     private void navigateToLogin() {
@@ -165,6 +296,12 @@ public class MainActivity extends FragmentActivity implements ActionBar.TabListe
 
     @Override
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+    }
+
+    @Override
+    public void onClick(View v)
+    {
+
     }
 
     /**
