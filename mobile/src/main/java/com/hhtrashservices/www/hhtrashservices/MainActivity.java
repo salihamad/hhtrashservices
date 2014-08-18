@@ -21,20 +21,16 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
-import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
-import com.google.android.gms.wearable.PutDataMapRequest;
-import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 import com.parse.ParseUser;
 
 
 public class MainActivity extends FragmentActivity implements
         ActionBar.TabListener,
-        View.OnClickListener,
         GoogleApiClient.ConnectionCallbacks, MessageApi.MessageListener {
 
     /**
@@ -45,6 +41,7 @@ public class MainActivity extends FragmentActivity implements
      * may be best to switch to a
      * {@link android.support.v13.app.FragmentStatePagerAdapter}.
      */
+
     SectionsPagerAdapter mSectionsPagerAdapter;
     private GoogleApiClient mGoogleApiClient;
     private int mShortAnimationDuration;
@@ -96,8 +93,6 @@ public class MainActivity extends FragmentActivity implements
         //mSectionsPagerAdapter = new SectionsPagerAdapter(this,getFragmentManager());
         mSectionsPagerAdapter = new SectionsPagerAdapter(this,getSupportFragmentManager());
 
-        //mListenerServiceMobile = new ListenerServiceMobile();
-
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.pager);
         mViewPager.setAdapter(mSectionsPagerAdapter);
@@ -123,8 +118,6 @@ public class MainActivity extends FragmentActivity implements
                             .setText(mSectionsPagerAdapter.getPageTitle(i))
                             .setTabListener(this));
         }
-
-        //sendMessage();
     }
 
     @Override
@@ -151,7 +144,7 @@ public class MainActivity extends FragmentActivity implements
         }
     };
 
-    private void sendStartMessage(){
+    protected void sendStartMessage(){
 
         NodeApi.GetConnectedNodesResult rawNodes =
                 Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
@@ -159,20 +152,6 @@ public class MainActivity extends FragmentActivity implements
         for (final Node node : rawNodes.getNodes()) {
             Log.v(TAG, "Node: " + node.getId());
 
-            PutDataMapRequest dataMap = PutDataMapRequest.create("/count");
-            dataMap.getDataMap().putInt("Count", 234);
-            PutDataRequest request = dataMap.asPutDataRequest();
-            PendingResult<DataApi.DataItemResult> pendingResult = Wearable.DataApi
-                    .putDataItem(mGoogleApiClient, request);
-
-            pendingResult.setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
-                @Override
-                public void onResult(final DataApi.DataItemResult result) {
-                    if(result.getStatus().isSuccess()) {
-                        Log.d(TAG, "Data item set: " + result.getDataItem().getUri());
-                    }
-                }
-            });
 
             PendingResult<MessageApi.SendMessageResult> result = Wearable.MessageApi.sendMessage(
                     mGoogleApiClient,
@@ -190,8 +169,6 @@ public class MainActivity extends FragmentActivity implements
                     peerNode = node;    //  Save the node that worked so we don't have to loop again.
                 }
             });
-
-
         }
     }
 
@@ -209,26 +186,13 @@ public class MainActivity extends FragmentActivity implements
     @Override
     protected void onResume() {
         super.onResume();
- //       mTalkClient.connectClient();
+        mGoogleApiClient.connect();
     }
 
     @Override
     protected void onDestroy() {
-       // mTalkClient.disconnectClient();
         super.onDestroy();
     }
-
-    /*private void sendMessage() {
-        DataMap dataMap = new DataMap();
-        dataMap.putString("data", "HH Trash Services Says Hello");
-        mTalkClient.setTalkMessageAdapter(new TalkMessageAdapter(){
-            @Override
-            public void onResult(MessageApi.SendMessageResult sendMessageResult) {
-                Log.e(TAG, "Message sent");
-            }
-        });
-        mTalkClient.sendMessage("/MyActivity", dataMap);
-    }*/
 
     @Override
     public void onMessageReceived(final MessageEvent messageEvent) {
@@ -296,12 +260,6 @@ public class MainActivity extends FragmentActivity implements
 
     @Override
     public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
-    }
-
-    @Override
-    public void onClick(View v)
-    {
-
     }
 
     /**

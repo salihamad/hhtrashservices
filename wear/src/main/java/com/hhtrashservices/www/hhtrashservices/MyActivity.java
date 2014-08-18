@@ -10,21 +10,16 @@ import android.widget.TextView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Wearable;
 
 public class MyActivity extends Activity implements
-        DataApi.DataListener, GooglePlayServicesClient.OnConnectionFailedListener, GooglePlayServicesClient.ConnectionCallbacks, MessageApi.MessageListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+        GooglePlayServicesClient.OnConnectionFailedListener, GooglePlayServicesClient.ConnectionCallbacks, MessageApi.MessageListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private TextView mTextView;
     private GoogleApiClient mGoogleApiClient;
     public static final String TAG = MyActivity.class.getSimpleName();
-
-    //private TalkClient mTalkClient;
-    //ListenerServiceMobile mListenerServiceMobile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,21 +38,15 @@ public class MyActivity extends Activity implements
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
-        //mListenerServiceMobile = new ListenerServiceMobile();
-
-
-        //mTalkClient = new TalkClient(this);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        //mTalkClient.connectClient();
     }
 
     @Override
     protected void onDestroy() {
-        //mTalkClient.disconnectClient();
         super.onDestroy();
     }
 
@@ -72,14 +61,14 @@ public class MyActivity extends Activity implements
         if(Log.isLoggable(TAG, Log.DEBUG)) {
             Log.d(TAG, "Connected to Google Api Service");
         }
-        Wearable.DataApi.addListener(mGoogleApiClient, this);
+        //Wearable.DataApi.addListener(mGoogleApiClient, this);
         Wearable.MessageApi.addListener(mGoogleApiClient, this);
     }
 
     @Override
     protected void onStop() {
         if (null != mGoogleApiClient && mGoogleApiClient.isConnected()) {
-            Wearable.DataApi.removeListener(mGoogleApiClient, this);
+            //Wearable.DataApi.removeListener(mGoogleApiClient, this);
             mGoogleApiClient.disconnect();
         }
         super.onStop();
@@ -95,21 +84,6 @@ public class MyActivity extends Activity implements
     public void onDisconnected()
     {
 
-    }
-
-    @Override
-    public void onDataChanged(DataEventBuffer dataEvents)
-    {
-
-        Intent intent = new Intent(MyActivity.this, MyActivity.class);
-        startActivity(intent);
-        /*for (DataEvent event : dataEvents) {
-            if (event.getType() == DataEvent.TYPE_DELETED) {
-                Log.d(TAG, "DataItem deleted: " + event.getDataItem().getUri());
-            } else if (event.getType() == DataEvent.TYPE_CHANGED) {
-                Log.d(TAG, "DataItem changed: " + event.getDataItem().getUri());
-            }
-        }*/
     }
 
     @Override
