@@ -3,7 +3,11 @@ package com.hhtrashservices.www.hhtrashservices;
 import android.app.ActionBar;
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v13.app.FragmentPagerAdapter;
@@ -118,6 +122,44 @@ public class MainActivity extends FragmentActivity implements
                             .setText(mSectionsPagerAdapter.getPageTitle(i))
                             .setTabListener(this));
         }
+
+        LocationManager manager = (LocationManager) getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
+        LocationListener listener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                Location locationA = new Location("point A");
+
+                locationA.setLatitude(30.66306);
+                locationA.setLongitude(-88.206226);
+
+                if(location.distanceTo(locationA) < 20){
+                    new AsyncTask<Void, Void, Void>(){
+                        @Override
+                        protected Void doInBackground(Void... params) {
+                            sendStartMessage("locationA");
+                            return null;
+                        }
+                    }.execute();
+                }
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+
+            }
+        };
+
+        manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 20, 0, listener);
     }
 
     @Override
@@ -137,14 +179,14 @@ public class MainActivity extends FragmentActivity implements
             new AsyncTask<Void, Void, Void>(){
                 @Override
                 protected Void doInBackground(Void... params) {
-                    sendStartMessage();
+
                     return null;
                 }
             }.execute();
         }
     };
 
-    protected void sendStartMessage(){
+    protected void sendStartMessage(String location){
 
         NodeApi.GetConnectedNodesResult rawNodes =
                 Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
@@ -156,7 +198,7 @@ public class MainActivity extends FragmentActivity implements
             PendingResult<MessageApi.SendMessageResult> result = Wearable.MessageApi.sendMessage(
                     mGoogleApiClient,
                     node.getId(),
-                    "/start",
+                    "/start/" + location,
                     null
             );
 
@@ -167,6 +209,7 @@ public class MainActivity extends FragmentActivity implements
                     //  This doesn't mean it worked, though.
                     Log.v(TAG, "Our callback is done.");
                     peerNode = node;    //  Save the node that worked so we don't have to loop again.
+
                 }
             });
         }

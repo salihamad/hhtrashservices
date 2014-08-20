@@ -12,4 +12,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/hello_square" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/btn_confirm"
+        android:id="@+id/btnConfirm"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginLeft="@dimen/card_content_padding_rect_left"
+        android:layout_marginTop="@dimen/card_content_padding_rect_top"
+        android:layout_marginRight="@dimen/card_content_padding_rect_right" />
+
 </LinearLayout>

@@ -105,8 +105,9 @@ public class MyActivity extends Activity implements
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                if(messageEvent.getPath().endsWith("connected")){
-
+                if(messageEvent.getPath().endsWith("/start/locationA")){
+                  mTextView = (TextView)findViewById(R.id.text);
+                  mTextView.setText("Confirm Trash Pickup for LocationA");
                 }
                 else{
                 }
